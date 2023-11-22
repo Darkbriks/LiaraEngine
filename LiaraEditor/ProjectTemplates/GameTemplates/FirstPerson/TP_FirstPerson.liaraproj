@@ -1,0 +1,4 @@
+<Game z:Id="i1" xmlns="http://schemas.datacontract.org/2004/07/LiaraEditor.GameProject" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/">
+<Name>TP_FirstPerson</Name>
+<Path>C:\Users\antoi\source\repos\Liara\LiaraEditor\ProjectTemplates\GameTemplates\FirstPerson</Path><Scenes>
+<Scene z:Id="i2"><Name>Default_Scene</Name><Project z:Ref="i1"/></Scene></Scenes></Game>
