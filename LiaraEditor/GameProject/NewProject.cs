@@ -1,61 +1,41 @@
 ﻿using LiaraEditor.Utilities;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using LiaraEditor.Commons;
+using LiaraEditor.DataStructures;
 using static LiaraEditor.Utilities.ProjectValidator;
+using Version = LiaraEditor.DataStructures.Version;
 
 namespace LiaraEditor.GameProject
-{
-    [DataContract]
-    public class ProjectTemplate
-    {
-        [DataMember]
-        public string ProjectType { get; set; }
-        [DataMember]
-        public string ProjectFile { get; set; }
-        [DataMember]
-        public List<string> Folders { get; set; }
-        [DataMember]
-        public List<string> HiddenFolders { get; set; }
-
-        public byte[] Icon { get; set; }
-        public byte[] Preview { get; set; }
-        public string IconPath { get; set; }
-        public string PreviewPath { get; set; }
-        public string ProjectFilePath { get; set; }
-    }
-
+{ 
     class NewProject : ViewModelBase
     {
+        ////////// Private fields //////////
         // TODO: Get the path from the installation location
-        private readonly string _projectTemplatesPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\source\\repos\\Liara\\LiaraEditor\\ProjectTemplates\\";
+        private readonly string _projectTemplatesPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\Liara\\LiaraEditor\\ProjectTemplates\\";
         private string _projectName = "NewProject";
+        private string _projectPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\\Liara Projects\\";
+        private ObservableCollection<ProjectTemplate> _templates = new ObservableCollection<ProjectTemplate>();
+        private bool _isValidate;
+        private string _errorMsg;
 
-        /// <summary>
-        /// The name of the project
-        /// </summary>
+        private Version _liaraVersion = new Version(0, 0, 2, 1, ReleaseType.Experimental, "build+2023+11+24"); // TODO: Get the version from the settings
+        
+        ////////// Properties //////////
         public string ProjectName
         {
-            get => _projectName; // get the value of the private field
-            set // set the value of the private field
+            get => _projectName;
+            set
             {
-                if (_projectName != value) // if the value is different
+                if (_projectName != value)
                 {
-                    _projectName = value; // set the value
-                    ValidateProject(); // validate the project name
-                    OnPropertyChanged(nameof(ProjectName)); // notify the UI that the value has changed
+                    _projectName = value;
+                    IsValidate = ValidateProject();
+                    OnPropertyChanged(nameof(ProjectName));
                 }
             }
         }
-
-        private string _projectPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}\\Liara Projects\\";
-
         public string ProjectPath
         {
             get => _projectPath;
@@ -69,11 +49,7 @@ namespace LiaraEditor.GameProject
                 }
             }
         }
-
-        private ObservableCollection<ProjectTemplate> _templates = new ObservableCollection<ProjectTemplate>();
         public ReadOnlyObservableCollection<ProjectTemplate> Templates { get; }
-
-        private bool _isValidate = false;
         public bool IsValidate
         {
             get => _isValidate;
@@ -86,8 +62,6 @@ namespace LiaraEditor.GameProject
                 }
             }
         }
-
-        private string _errorMsg;
         public string ErrorMsg
         {
             get => _errorMsg;
@@ -100,114 +74,116 @@ namespace LiaraEditor.GameProject
                 }
             }
         }
-        private bool ValidateProject()
-        {
-            (ProjectNameError, string) NameResult = ProjectValidator.ValidateProjectName(ProjectName, ProjectPath);
-            if (NameResult.Item1 != ProjectNameError.None)
-            {
-                ErrorMsg = string.Format("Error : {0} \"{1}\"", NameResult.Item1, NameResult.Item2);
-                IsValidate = false;
-                return false;
-            }
-
-            (ProjectPathError, string) PathResult = ProjectValidator.ValidateProjectPath(ProjectPath);
-            if (PathResult.Item1 != ProjectPathError.None)
-            {
-                ErrorMsg = string.Format("Error : {0}", PathResult.Item1);
-                IsValidate = false;
-                return false;
-            }
-            ErrorMsg = string.Empty;
-            IsValidate = true;
-            Debug.WriteLine("No error");
-            return true;
-        }
-
-        public string CreateProject(ProjectTemplate template)
-        {
-            ValidateProject();
-            if (!IsValidate)
-            {
-                return string.Empty;
-            }
-
-            if (!Path.EndsInDirectorySeparator(ProjectPath)) ProjectPath += Path.DirectorySeparatorChar;
-            var projectPath = Path.Combine(ProjectPath, ProjectName);
-
-            try
-            {
-                Directory.CreateDirectory(projectPath);
-                foreach (var folder in template.Folders) { Directory.CreateDirectory(Path.Combine(projectPath, folder)); }
-                foreach (var folder in template.HiddenFolders)
-                { 
-                    Directory.CreateDirectory(Path.Combine(projectPath, folder));
-                    File.SetAttributes(Path.Combine(projectPath, folder), FileAttributes.Hidden);
-                }
-                // Debug
-                var dir = new DirectoryInfo(projectPath);
-                // Copier l'icone et la preview dans le dossier Misc
-                File.Copy(template.IconPath, Path.Combine(projectPath, "Misc", Path.GetFileName(template.IconPath)));
-                File.Copy(template.PreviewPath, Path.Combine(projectPath, "Misc", Path.GetFileName(template.PreviewPath)));
-
-                // Créer le fichier de projet
-                /*var project = new Project(ProjectName, projectPath);
-                Serializer.ToFile(project, Path.Combine(projectPath, ProjectName + Project.ProjectFileExtension));*/
-
-                var projectXml = File.ReadAllText(template.ProjectFilePath);
-                projectXml = projectXml.Replace(template.ProjectType, ProjectName);
-                var projectFile = Path.GetFullPath(Path.Combine(projectPath, ProjectName + Project.ProjectFileExtension));
-                File.WriteAllText(projectFile, projectXml);
-                return projectPath;
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-                // TODO: Log the error
-                return string.Empty;
-            }
-        }
-
+        
+        ////////// Constructor //////////
         public NewProject()
         {
             Templates = new ReadOnlyObservableCollection<ProjectTemplate>(_templates);
             try
             {
-                var projectTemplates = Directory.GetFiles(_projectTemplatesPath, "*.xml", SearchOption.AllDirectories); // get all the project templates in a form of a list
-                Debug.Assert(projectTemplates.Any()); // make sure there is at least one project template
+                // get all the project templates in a form of a list of strings
+                var projectTemplates = Directory.GetFiles(_projectTemplatesPath, "*.xml", SearchOption.AllDirectories);
+                Debug.Assert(projectTemplates.Any());
+                
+                // for each project template, deserialize it and add it to the list of templates
                 foreach (var file in projectTemplates)
                 {
-                    // Pour générer les fichiers de projet.
-                    /*var projectTemplate = new ProjectTemplate()
-                    {
-                        ProjectType = "Empty Project",
-                        ProjectFile = "project.liara",
-                        Folders = new List<string>() { ".Liara", "Content", "Scripts" }
-                    };
-
-                    Serializer.ToFile(projectTemplate, file);*/
-
-                    var projectTemplate = Serializer.FromFile<ProjectTemplate>(file); // deserialize the project template
-
-                    // The icon and preview are stored in the same folder as the project template.
-                    // The icon is a png file named "<project template name>.png" -> the path is "<project template name>.png"
-                    // The preview is a png file named "<project template name>_Preview.png" -> the path is "<project template name>_Preview.png"
-                    // The project file is a xml file named "<project template name>.xml" -> the path is "<project template name>.xml"
-                    projectTemplate.IconPath = Path.Combine(Path.GetDirectoryName(file), $"{Path.GetFileNameWithoutExtension(file)}.png");
-                    projectTemplate.PreviewPath = Path.Combine(Path.GetDirectoryName(file), $"{Path.GetFileNameWithoutExtension(file)}_Preview.png");
-                    projectTemplate.ProjectFilePath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file), projectTemplate.ProjectFile)); // TODO: Check if the path can be simplified
+                    // Si le fichier est le fichier de valeurs par défaut, passer au suivant
+                    if (file.Contains("DefaultValues")) continue;
                     
-                    projectTemplate.Icon = File.ReadAllBytes(projectTemplate.IconPath); // read the icon
-                    projectTemplate.Preview = File.ReadAllBytes(projectTemplate.PreviewPath); // read the preview
+                    var projectTemplate = Serializer.FromFile<ProjectTemplate>(file);
+                    projectTemplate.ProjectFilePath = Path.GetFullPath(file);
+                    
+                    // Copier l'icone et la preview dans le dossier Misc (si le dossier existe)
+                    if (projectTemplate.Folders.Contains("Misc"))
+                    {
+                        projectTemplate.IconPath = Path.GetFullPath(file.Replace(".xml", ".png"));
+                        projectTemplate.PreviewPath = Path.GetFullPath(file.Replace(".xml", "_Preview.png"));
+                        projectTemplate.Icon = File.ReadAllBytes(projectTemplate.IconPath);
+                        projectTemplate.Preview = File.ReadAllBytes(projectTemplate.PreviewPath);
+                    }
+                    // Sinon, utiliser l'icone et la preview par défaut
+                    else
+                    {
+                        projectTemplate.Icon = File.ReadAllBytes(Path.Combine(_projectTemplatesPath, "DefaultValues", "Icon.png"));
+                        projectTemplate.Preview = File.ReadAllBytes(Path.Combine(_projectTemplatesPath, "DefaultValues", "Preview.png"));
+                        projectTemplate.IconPath = Path.Combine(_projectTemplatesPath, "DefaultValues", "Icon.png");
+                        projectTemplate.PreviewPath = Path.Combine(_projectTemplatesPath, "DefaultValues", "Preview.png");
+                    }
 
-                    _templates.Add(projectTemplate); // add the project template to the list
+                    // Ajouter le template à la liste
+                    _templates.Add(projectTemplate);
+                    Console.WriteLine(projectTemplate.TemplateName);
                 }
-                ValidateProject();
+                IsValidate = ValidateProject();
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
                 // TODO: Log the error
             }
+        }
+        
+        ////////// Methods //////////
+        private bool ValidateProject()
+        {
+            (ProjectNameError, string) nameResult = ValidateProjectName(ProjectName, ProjectPath);
+            if (nameResult.Item1 != ProjectNameError.None)
+            {
+                ErrorMsg = string.Format("Error : {0} \"{1}\"", nameResult.Item1, nameResult.Item2); return false;
+            }
+
+            (ProjectPathError, string) pathResult = ProjectValidator.ValidateProjectPath(ProjectPath);
+            if (pathResult.Item1 != ProjectPathError.None)
+            {
+                ErrorMsg = string.Format("Error : {0}", pathResult.Item1); return false;
+            }
+            ErrorMsg = string.Empty;
+            return true;
+        }
+
+        public string CreateProject(ProjectTemplate template)
+        {
+            // If the project is not valid, return an empty string
+            if (!ValidateProject()) return string.Empty;
+
+            if (!Path.EndsInDirectorySeparator(ProjectPath)) ProjectPath += Path.DirectorySeparatorChar;
+            var fullProjectPath = Path.Combine(ProjectPath, ProjectName);
+
+            try
+            {
+                // Create the project folder and all the subfolders
+                Directory.CreateDirectory(fullProjectPath);
+                foreach (var folder in template.Folders) { Directory.CreateDirectory(Path.Combine(fullProjectPath, folder)); }
+                
+                // Create the hidden folders
+                foreach (var folder in template.HiddenFolders)
+                { 
+                    Directory.CreateDirectory(Path.Combine(fullProjectPath, folder));
+                    File.SetAttributes(Path.Combine(fullProjectPath, folder), FileAttributes.Hidden);
+                }
+                
+                // Copier l'icone et la preview dans le dossier Misc (et créer le dossier si il n'existe pas)
+                if (!template.Folders.Contains("Misc")) { Directory.CreateDirectory(Path.Combine(fullProjectPath, "Misc")); }
+                File.WriteAllBytes(Path.Combine(fullProjectPath, "Misc\\Icons", "Icon.png"), template.Icon);
+                File.WriteAllBytes(Path.Combine(fullProjectPath, "Misc\\Preview", "Preview.png"), template.Preview);
+                
+                // Create the project file
+                string projectFile = Path.Combine(fullProjectPath, ProjectName + Project.ProjectFileExtension);
+                Project project = Serializer.FromFile<Project>(template.ProjectFilePath.Replace(".xml", Project.ProjectFileExtension));
+                project.Name = ProjectName;
+                project.Author = Environment.UserName; // TODO: Get the author name from the settings
+                project.Path = ProjectPath;
+                project.LiaraVersion = _liaraVersion;
+                Serializer.ToFile(project, projectFile);
+                return fullProjectPath;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+                // TODO: Log the error
+            }
+            return string.Empty;
         }
     }
 }

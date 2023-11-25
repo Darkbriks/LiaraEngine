@@ -1,0 +1,30 @@
+<ProjectTemplate xmlns="http://schemas.datacontract.org/2004/07/LiaraEditor.DataStructures" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+
+<Folders xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+    <a:string>Content</a:string>
+    <a:string>Scripts</a:string>
+    <a:string>Misc</a:string>
+    <a:string>Misc\Icons</a:string>
+    <a:string>Misc\Preview</a:string>
+</Folders>
+
+<HiddenFolders xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"><a:string>.liara</a:string></HiddenFolders>
+<IsBeta>false</IsBeta>
+<IsExperimental>true</IsExperimental>
+<IsHidden>false</IsHidden>
+<IsObsolete>false</IsObsolete>
+
+<MinimumLiaraVersion><Build>1</Build><BuildMetadata>build+2023+11+??</BuildMetadata><Major>0</Major><Minor>0</Minor><Patch>2</Patch><ReleaseLabel>Experimental</ReleaseLabel></MinimumLiaraVersion>
+<RecommendedLiaraVersions>
+    <Version><Build>0</Build><BuildMetadata>build+2023+11+22</BuildMetadata><Major>0</Major><Minor>0</Minor><Patch>2</Patch><ReleaseLabel>Experimental</ReleaseLabel></Version>
+    <Version><Build>1</Build><BuildMetadata>build+2023+11+??</BuildMetadata><Major>0</Major><Minor>0</Minor><Patch>2</Patch><ReleaseLabel>Experimental</ReleaseLabel></Version>
+</RecommendedLiaraVersions>
+
+<TemplateAuthor>Liara Team</TemplateAuthor>
+<TemplateDescription>A blank project template, for creating a new project from scratch.</TemplateDescription>
+<TemplateName>Blank</TemplateName>
+<TemplateType>GAME</TemplateType>
+
+<TemplateVersion><Build>0</Build><BuildMetadata>build+2023+11+25</BuildMetadata><Major>0</Major><Minor>1</Minor><Patch>0</Patch><ReleaseLabel>Experimental</ReleaseLabel></TemplateVersion>
+
+</ProjectTemplate>

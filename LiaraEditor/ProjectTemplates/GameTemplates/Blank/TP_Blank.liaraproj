@@ -1,4 +1,10 @@
 <Game z:Id="i1" xmlns="http://schemas.datacontract.org/2004/07/LiaraEditor.GameProject" xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:z="http://schemas.microsoft.com/2003/10/Serialization/">
-<Name>TP_Blank</Name>
-<Path>C:\Users\antoi\source\repos\Liara\LiaraEditor\ProjectTemplates\GameTemplates\Blank</Path><Scenes>
-<Scene z:Id="i2"><Name>Default_Scene</Name><Project z:Ref="i1"/></Scene></Scenes></Game>
+<Name>Blank</Name>
+<Version>0.0.1</Version>
+<Autor>Liara Studio</Autor>
+<CreationDate>2023-11-22</CreationDate>
+<LastModificationDate>2023-11-22</LastModificationDate>
+<LastModificationHour>12:00:00</LastModificationHour>
+<Misc>true</Misc>
+<Path>C:\Users\Liara\LiaraEditor\ProjectTemplates\GamesTemplate\Blank</Path>
+</Game>

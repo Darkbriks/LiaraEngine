@@ -10,21 +10,38 @@
     <UserControl.DataContext>
         <local:NewProject/>
     </UserControl.DataContext>
+    <UserControl.Resources>
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
     <StackPanel Background="Gray">
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-            <ListBox Width="350" Height="200" ItemsSource="{Binding Templates}" x:Name="templateListBox" SelectedIndex="0">
+            <ListBox Width="350" Height="200" ItemsSource="{Binding Templates}" x:Name="TemplateListBox" SelectedIndex="0">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{Binding Icon}" Margin="0,0,5,0" Width="75"/>
-                            <TextBlock Text="{Binding ProjectType}" FontSize="24" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding TemplateName}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding TemplateDescription}" TextWrapping="Wrap" Width="200"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Author :" Margin="0,0,5,0" FontSize="10"/>
+                                    <TextBlock Text="{Binding TemplateAuthor}" Margin="0,0,5,0" FontSize="10"/>
+                                    <TextBlock Text="- Beta" FontSize="10" Foreground="DarkOrange" Visibility="{Binding IsBeta, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,5,0"/>
+                                    <TextBlock Text="- Experimental" FontSize="10" Foreground="Red" Visibility="{Binding IsExperimental, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    <TextBlock Text="- Obsolete" FontSize="10" Foreground="DarkBlue" Visibility="{Binding IsObsolete, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Version :" Margin="0,0,5,0" FontSize="10"/>
+                                    <TextBlock Text="{Binding TemplateVersion}" FontSize="10"/>
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
             <Border Width="400" Height="250" Margin="5,0,0,0">
                 <Border.Background>
-                    <ImageBrush ImageSource="{Binding Path=SelectedItem.Preview, ElementName=templateListBox}"/>
+                    <ImageBrush ImageSource="{Binding Path=SelectedItem.Preview, ElementName=TemplateListBox}"/>
                 </Border.Background>
             </Border>
         </StackPanel>

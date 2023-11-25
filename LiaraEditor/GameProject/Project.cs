@@ -6,6 +6,9 @@ using System.Runtime.Serialization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LiaraEditor.Commons;
+using LiaraEditor.DataStructures;
+using Version = LiaraEditor.DataStructures.Version;
 
 namespace LiaraEditor.GameProject
 {
@@ -14,10 +17,17 @@ namespace LiaraEditor.GameProject
     {
         public static string ProjectFileExtension { get; } = ".liaraproj";
         [DataMember]
-        public string Name { get; private set; }
+        public string Name { get; set; }
         [DataMember]
-        public string Path { get; private set; }
+        public string Path { get; set; }
         public string FullPath => $"{Path}\\{Name}{ProjectFileExtension}";
+        
+        [DataMember]
+        public string Author { get; set; }
+        
+        [DataMember]
+        public Version LiaraVersion { get; set; }
+
 
         [DataMember (Name = "Scenes")]
         private ObservableCollection<Scene> _scene = new ObservableCollection<Scene>();
